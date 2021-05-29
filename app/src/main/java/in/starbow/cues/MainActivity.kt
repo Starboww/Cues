@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
+import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -53,9 +54,51 @@ class MainActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu,menu)
             //search function code
+        val item= menu?.findItem(R.id.search)
+        val searchView = item?.actionView as SearchView
+        item.setOnActionExpandListener(object:MenuItem.OnActionExpandListener{
+            override fun onMenuItemActionExpand(p0: MenuItem?): Boolean {
+                displayTodo()
+                return true
+            }
 
+            override fun onMenuItemActionCollapse(p0: MenuItem?): Boolean {
+                displayTodo()
+                return true
+            }
+
+        })
+         searchView.setOnQueryTextListener(object:SearchView.OnQueryTextListener{
+             override fun onQueryTextSubmit(query: String?): Boolean {
+                 return false
+             }
+
+             override fun onQueryTextChange(newText: String?): Boolean {
+                 if(!newText.isNullOrEmpty()){
+                     displayTodo(newText)
+                 }
+                return true
+             }
+
+
+         })
         return super.onCreateOptionsMenu(menu)
     }
+
+    private fun displayTodo(newText:String="") {
+        db.todoDao().getTask().observe(this,androidx.lifecycle.Observer{
+            if(it.isNotEmpty()){
+                list.clear()
+                list.addAll(
+                    it.filter {todo ->
+                        todo.title.contains(newText,true)
+                    }
+                )
+                adapter.notifyDataSetChanged()
+            }
+        })
+    }
+
     fun initSwip(){
         val simpleItemTouchCallBack=object: ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT){
             override fun onMove(
